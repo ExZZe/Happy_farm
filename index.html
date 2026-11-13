@@ -172,25 +172,24 @@ bg.onclick=()=>{mb.innerHTML='<h2>⚙️ Настройки</h2><p>Сложно�
  const up=()=>{mv.textContent='×'+(+S.mult).toFixed(2)+' ('+(S.mult>1?'легче':S.mult<1?'сложнее':'обычная')+')';rg.value=S.mult};
  rg.oninput=()=>{S.mult=+rg.value;up()};MP.forEach(([n,v])=>{const b=document.createElement('button');b.textContent=n+' ×'+v;b.onclick=()=>{S.mult=v;up()};pr.append(b)});up();
  const gl=mb.querySelector('.gl'),gt=()=>gl.textContent=S.glue?'Прилипает к курсору':'Тянется сзади (с инерцией)';gl.onclick=()=>{S.glue=S.glue?0:1;gt()};gt();let sure=0;rs.onclick=()=>{if(!sure){sure=1;rs.textContent='Точно сбросить? Нажми ещё раз';return}reset();md.hidden=true};opn()};
-const LOCAL_API='http://localhost:3000';
-const apiBase=()=>{try{const q=new URLSearchParams(location.search).get('api');if(q){localStorage.setItem('farm2api',q);}const v=localStorage.getItem('farm2api');if(v)return v.replace(/\/$/,'')}catch(e){}
- if(window.FARM_API)return window.FARM_API;const h=location.hostname,p=location.port;return(location.protocol=='file:'||h.endsWith('github.io')||p&&p!='3000')?LOCAL_API:''};
-const API=apiBase()+'/api/lb';
+// ===== Supabase: вставь сюда адрес проекта и публичный ключ (Project Settings → API) =====
+const SB_URL='https://mprbausbfeemwzenywqw.supabase.co',SB_KEY='sb_publishable_tYAFEEaXr-uJFWSg7-SqUQ_WotXYXLs';
+const sbH={'Content-Type':'application/json',apikey:SB_KEY};
 let LB=[],lbMode='local',lbSent=-1,lbFail=0,lbId=null;
 try{lbId=localStorage.getItem('farm2id');if(!lbId){lbId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem('farm2id',lbId)}}catch(e){lbId='p'+Math.random().toString(36).slice(2,14)}
 const lbLocal=()=>{try{return JSON.parse(localStorage.getItem('farm2lb')||'[]')}catch(e){return[]}};
 function lbDraw(){const el=document.getElementById('lb');el.textContent='';const t=document.createElement('b');t.textContent='🏆 '+(lbMode=='db'?'Лидеры: ':'Лидеры устройства: ');el.append(t);
  if(!LB.length)el.append('пока никого — зарабатывай монеты');LB.slice(0,5).forEach((r,i)=>{const s=document.createElement('span');s.textContent=(i+1)+'. '+r.name+' — '+r.score;el.append(s)});if(!S.name)el.append(' (укажи имя в «🏆 Лидеры»)')}
-async function lbLoad(n){try{const r=await fetch(API+'?limit='+(n||20),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();LB=j.rows||[];lbMode='db'}catch(e){lbMode='local';LB=lbLocal()}lbDraw()}
+async function lbLoad(n){try{if(!SB_URL||!SB_KEY)throw 0;const r=await fetch(SB_URL+'/rest/v1/rpc/get_top',{method:'POST',headers:sbH,body:JSON.stringify({p_limit:n||20})});if(!r.ok)throw 0;LB=await r.json();lbMode='db'}catch(e){lbMode='local';LB=lbLocal()}lbDraw()}
 async function lbInit(){await lbLoad();setInterval(lbLoad,20000)}
 async function lbSubmit(){if(!S.name)return;S.best=Math.max(S.best||0,S.earn);if(S.best===lbSent)return;const row={id:lbId,name:S.name.slice(0,16),score:S.best,day:S.day};
  const a=lbLocal().filter(r=>r.name!=row.name);a.push({name:row.name,score:row.score,day:row.day});a.sort((p,q)=>q.score-p.score);try{localStorage.setItem('farm2lb',JSON.stringify(a.slice(0,20)))}catch(e){}
- try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(row)});if(!r.ok)throw 0;lbSent=S.best;lbFail=0;lbLoad()}catch(e){lbFail=1;if(lbMode!='db'){LB=a.slice(0,20);lbDraw()}}}
+ try{if(!SB_URL||!SB_KEY)throw 0;const r=await fetch(SB_URL+'/rest/v1/rpc/submit_score',{method:'POST',headers:sbH,body:JSON.stringify({p_id:row.id,p_name:row.name,p_score:row.score,p_day:row.day})});if(!r.ok)throw 0;lbSent=S.best;lbFail=0;lbLoad()}catch(e){lbFail=1;if(lbMode!='db'){LB=a.slice(0,20);lbDraw()}}}
 bl.onclick=()=>{mb.innerHTML='<h2>🏆 Лидеры</h2><p>Очки — всего заработано монет (сохраняется лучший результат, сброс прогресса его не снижает).</p><div><input class="nm" maxlength="16" placeholder="Твоё имя" style="padding:7px;border-radius:8px;width:60%"> <button class="sv">Сохранить имя</button></div><p class="st"></p><table class="ls" style="width:100%;border-collapse:collapse"></table>'+cls;
  const ni=mb.querySelector('.nm'),st=mb.querySelector('.st'),ls=mb.querySelector('.ls');ni.value=S.name||'';
- st.textContent=lbMode=='db'?'Общий рейтинг (база данных на сервере).'+(lbFail?' Не удалось отправить результат, попробую снова.':''):'Сервер рейтинга недоступен — показан рейтинг этого устройства. Запусти игру через server.js.';
- const fill=()=>{ls.textContent='';if(!LB.length){ls.textContent='Пока никого — стань первым!';return}LB.forEach((r,i)=>{const tr=ls.insertRow(),me=S.name&&r.name==S.name;if(me)tr.style.background='rgba(224,176,74,.25)';[['🥇🥈🥉'.match(/./gu)[i]||i+1,''],[r.name,''],[r.score.toLocaleString('ru')+' 💰','right'],['день '+r.day,'right']].forEach(([v,al])=>{const td=tr.insertCell();td.textContent=v;td.style.padding='5px 8px';if(al)td.style.textAlign=al})})};
- fill();lbLoad(100).then(()=>{fill();st.textContent=lbMode=='db'?'Общий рейтинг (база данных на сервере).':st.textContent});
+ st.textContent=lbMode=='db'?'Общий рейтинг (база данных Supabase).'+(lbFail?' Не удалось отправить результат, попробую снова.':''):'База рейтинга недоступна — показан рейтинг этого устройства.';
+ const fill=()=>{ls.textContent='';if(!LB.length){ls.textContent='Пока никого — стань первым!';return}LB.forEach((r,i)=>{const tr=ls.insertRow(),me=S.name&&r.name==S.name;if(me)tr.style.background='rgba(224,176,74,.25)';[['🥇🥈🥉'.match(/./gu)[i]||i+1,''],[r.name,''],[Number(r.score).toLocaleString('ru')+' 💰','right'],['день '+r.day,'right']].forEach(([v,al])=>{const td=tr.insertCell();td.textContent=v;td.style.padding='5px 8px';if(al)td.style.textAlign=al})})};
+ fill();lbLoad(100).then(()=>{fill();st.textContent=lbMode=='db'?'Общий рейтинг (база данных Supabase).':st.textContent});
  mb.querySelector('.sv').onclick=()=>{const v=ni.value.trim().slice(0,16);if(v){S.name=v;save();lbSent=-1;lbSubmit();lbDraw()}};opn()};
 function save(){try{localStorage.setItem('farm2',JSON.stringify(S))}catch(e){}}
 setInterval(save,4000);document.addEventListener('visibilitychange',save);
