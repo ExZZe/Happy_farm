@@ -172,7 +172,10 @@ bg.onclick=()=>{mb.innerHTML='<h2>⚙️ Настройки</h2><p>Сложно�
  const up=()=>{mv.textContent='×'+(+S.mult).toFixed(2)+' ('+(S.mult>1?'легче':S.mult<1?'сложнее':'обычная')+')';rg.value=S.mult};
  rg.oninput=()=>{S.mult=+rg.value;up()};MP.forEach(([n,v])=>{const b=document.createElement('button');b.textContent=n+' ×'+v;b.onclick=()=>{S.mult=v;up()};pr.append(b)});up();
  const gl=mb.querySelector('.gl'),gt=()=>gl.textContent=S.glue?'Прилипает к курсору':'Тянется сзади (с инерцией)';gl.onclick=()=>{S.glue=S.glue?0:1;gt()};gt();let sure=0;rs.onclick=()=>{if(!sure){sure=1;rs.textContent='Точно сбросить? Нажми ещё раз';return}reset();md.hidden=true};opn()};
-const API=(window.FARM_API||'')+'/api/lb';
+const LOCAL_API='http://localhost:3000';
+const apiBase=()=>{try{const q=new URLSearchParams(location.search).get('api');if(q){localStorage.setItem('farm2api',q);}const v=localStorage.getItem('farm2api');if(v)return v.replace(/\/$/,'')}catch(e){}
+ if(window.FARM_API)return window.FARM_API;const h=location.hostname,p=location.port;return(location.protocol=='file:'||h.endsWith('github.io')||p&&p!='3000')?LOCAL_API:''};
+const API=apiBase()+'/api/lb';
 let LB=[],lbMode='local',lbSent=-1,lbFail=0,lbId=null;
 try{lbId=localStorage.getItem('farm2id');if(!lbId){lbId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem('farm2id',lbId)}}catch(e){lbId='p'+Math.random().toString(36).slice(2,14)}
 const lbLocal=()=>{try{return JSON.parse(localStorage.getItem('farm2lb')||'[]')}catch(e){return[]}};
