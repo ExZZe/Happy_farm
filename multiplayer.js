@@ -71,7 +71,7 @@ function endRaid(){if(!vis)return;const v=vis,ch=[];S.tiles.forEach((t,i)=>{if(s
  rpc('farm_raid_commit',{p_id:lbId,p_pub:v.pub,p_changes:ch,p_loot:v.loot}).catch(()=>{})}
 // во время рейда не сохраняем чужое поле как своё и блокируем лабораторию/магазин/сброс/биржу
 const si=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(vis&&k=='farm2'){try{const o=JSON.parse(v);o.tiles=vis.mine;v=JSON.stringify(o)}catch(e){}}return si.call(this,k,v)};
-document.addEventListener('click',e=>{if(vis&&e.target.closest&&e.target.closest('#bm,#bs,#bg,#bt,#bf')){e.stopPropagation();e.preventDefault();fl(550,330,'Сначала уйди с чужой фермы','#f88')}},true);
+document.addEventListener('click',e=>{if(vis&&e.target.closest&&e.target.closest('#bm,#bs,#bg,#bt,#bf,#bu')){e.stopPropagation();e.preventDefault();fl(550,330,'Сначала уйди с чужой фермы','#f88')}},true);
 async function viewF(f){mb.innerHTML='<h2></h2><canvas width="540" height="360" style="max-width:100%"></canvas><p class="in"></p><div class="ac"></div>'+cls;mb.querySelector('h2').textContent='👁 Ферма «'+f.name+'»';opn();
  try{const tiles=((await rpc('farm_field_view',{p_pub:f.pub}))||[]).slice(0,CO*RO).map(cleanTile),c=mb.querySelector('canvas').getContext('2d');c.fillStyle='#2f4a26';c.fillRect(0,0,540,360);
   tiles.forEach((t,i)=>{const gx=i%CO,gy=(i/CO)|0,x=gx*60,y=gy*60;c.fillStyle=(gx+gy)%2?'#5f9c47':'#5a9642';c.fillRect(x,y,60,60);if(t.till>0){c.fillStyle=`hsl(26,42%,${32-t.wet*17}%)`;c.fillRect(x+4,y+4,52,52)}
@@ -127,5 +127,5 @@ bt.onclick=openX;
 
 // подсказки
 const bh0=bh.onclick;bh.onclick=()=>{bh0();const u=mb.querySelector('ul');if(u)u.insertAdjacentHTML('beforeend','<li><b>Урожай</b> — каждое семя из растения выпадает с шансом 35%, так что семян может не быть вовсе.</li><li><b>🌍 Фермы</b> — смотри чужие грядки, воруй спелый урожай за 25% его стоимости (60 секунд на чужом поле, инвентарь хозяина не тронуть) или вредь: валун, саранча, неурожай, засуха, инверсия управления, ржавые инструменты. После атаки у жертвы защита; 🛡 можно купить заранее.</li>')};
-ping();claim();push();pull();setInterval(()=>{ping();claim();pull()},10000);setInterval(push,20000);
+(window.authReady||Promise.resolve()).then(()=>{ping();claim();push();pull();setInterval(()=>{ping();claim();pull()},10000);setInterval(push,20000)});
 })();
