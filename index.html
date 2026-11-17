@@ -197,5 +197,6 @@ let last=performance.now(),lc=-1;
 function loop(n){const dt=Math.min(.05,(n-last)/1e3);last=n;tm+=dt;update(dt);draw();if(lc!==S.coins){lc=S.coins;co.textContent=S.coins}dy.textContent=S.day;db.style.width=(S.tod/DAY*100)+'%';requestAnimationFrame(loop)}
 requestAnimationFrame(loop);lbInit();setInterval(lbSubmit,15000);
 </script>
+<script src="auth.js"></script>
 <script src="multiplayer.js"></script>
 </body></html>
